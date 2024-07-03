@@ -14,7 +14,14 @@ import { md5 } from 'src/utils/utils';
 import { Role } from './entity/role.entity';
 import { Permission } from './entity/permission.entity';
 import { LoginDto } from './dto/login.dto';
-import { createLoginUserVo, validateLoginUser } from './em/login.em';
+import {
+  createLoginUserVo,
+  signAccessToken,
+  signRefreshToken,
+  validateLoginUser,
+} from './em/login.em';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
@@ -34,6 +41,12 @@ export class UserService {
 
   @Inject(EmailService)
   private emailService: EmailService;
+
+  @Inject(JwtService)
+  private jwtService: JwtService;
+
+  @Inject(ConfigService)
+  private configService: ConfigService;
 
   async register(user: RegisterUserDto) {
     const captcha = await this.redisService.get(`captcha_${user.email}`);
@@ -82,6 +95,8 @@ export class UserService {
 
     const vo = createLoginUserVo(user);
 
+    vo.accessToken = signAccessToken(this.jwtService, this.configService, vo);
+    vo.refreshToken = signRefreshToken(this.jwtService, this.configService, vo);
     return vo;
   }
 

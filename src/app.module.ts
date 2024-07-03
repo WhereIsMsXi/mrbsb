@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from './user/user.module';
+import { User } from './user/entity/user.entity';
+import { Role } from './user/entity/role.entity';
+import { Permission } from './user/entity/permission.entity';
 
 @Module({
   imports: [
@@ -14,13 +18,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       database: 'meeting_room_booking_system',
       synchronize: true,
       logging: true,
-      entities: [],
+      entities: [User, Role, Permission],
       poolSize: 10,
       connectorPackage: 'mysql2',
       extra: {
         authPlugin: 'sha256_password',
       },
     }),
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

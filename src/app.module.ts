@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { User } from './user/entity/user.entity';
 import { Role } from './user/entity/role.entity';
 import { Permission } from './user/entity/permission.entity';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { Permission } from './user/entity/permission.entity';
       },
     }),
     UserModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -13,18 +13,28 @@ export class UserController {
   }
 
   @Get('register-captcha')
-  async captcha(@Query('address') address: string) {
+  captcha(@Query('address') address: string) {
     return this.userService.registerCatpcha(address);
   }
 
   @Post('login')
-  async userLogin(@Body() loginUser: LoginDto) {
+  userLogin(@Body() loginUser: LoginDto) {
     return this.userService.login(loginUser, false);
   }
 
   @Post('admin/login')
-  async adminLogin(@Body() loginUser: LoginDto) {
+  adminLogin(@Body() loginUser: LoginDto) {
     return this.userService.login(loginUser, true);
+  }
+
+  @Get('refresh')
+  refresh(@Query('refreshToken') refreshToken: string) {
+    return this.userService.refresh(refreshToken);
+  }
+
+  @Get('admin/refresh')
+  adminRefresh(@Query('refreshToken') refreshToken: string) {
+    return this.userService.refresh(refreshToken);
   }
 
   @Get('init-data')

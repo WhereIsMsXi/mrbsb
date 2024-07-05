@@ -1,4 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entity/user.entity';
@@ -20,6 +25,7 @@ import {
   signRefreshToken,
   validateLoginUser,
 } from './em/login.em';
+import { findUserById } from './em/refresh.em';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
@@ -94,10 +100,41 @@ export class UserService {
     validateLoginUser(user, loginDto);
 
     const vo = createLoginUserVo(user);
+    vo.accessToken = signAccessToken(
+      this.jwtService,
+      this.configService,
+      vo.userInfo,
+    );
+    vo.refreshToken = signRefreshToken(
+      this.jwtService,
+      this.configService,
+      vo.userInfo,
+    );
 
-    vo.accessToken = signAccessToken(this.jwtService, this.configService, vo);
-    vo.refreshToken = signRefreshToken(this.jwtService, this.configService, vo);
     return vo;
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const data = this.jwtService.verify(refreshToken);
+      const user = await findUserById(this.userRepository, data.userId, false);
+      const access_token = signAccessToken(
+        this.jwtService,
+        this.configService,
+        user,
+      );
+      const refresh_token = signRefreshToken(
+        this.jwtService,
+        this.configService,
+        user,
+      );
+      return {
+        access_token,
+        refresh_token,
+      };
+    } catch (e) {
+      throw new UnauthorizedException('token 已失效，请重新登录');
+    }
   }
 
   async initData() {

@@ -2,9 +2,10 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { LoginDto } from '../dto/login.dto';
 import { User } from '../entity/user.entity';
 import { md5 } from 'src/utils/utils';
-import { LoginVo } from '../vo/login.vo';
+import { LoginVo, UserInfo } from '../vo/login.vo';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+
 export function validateLoginUser(user: User, loginDto: LoginDto) {
   if (!user) {
     throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
@@ -43,14 +44,14 @@ export function createLoginUserVo(user: User) {
 export function signAccessToken(
   jwtService: JwtService,
   configService: ConfigService,
-  vo: LoginVo,
+  userInfo: UserInfo,
 ) {
   const accessToken = jwtService.sign(
     {
-      userId: vo.userInfo.id,
-      username: vo.userInfo.username,
-      roles: vo.userInfo.roles,
-      permissions: vo.userInfo.permissions,
+      userId: userInfo.id,
+      username: userInfo.username,
+      roles: userInfo.roles,
+      permissions: userInfo.permissions,
     },
     {
       expiresIn: configService.get('jwt_access_token_expires_in') || '30m',
@@ -62,11 +63,11 @@ export function signAccessToken(
 export function signRefreshToken(
   jwtService: JwtService,
   configService: ConfigService,
-  vo: LoginVo,
+  userInfo: UserInfo,
 ) {
   const refreshToken = jwtService.sign(
     {
-      userId: vo.userInfo.id,
+      userId: userInfo.id,
     },
     {
       expiresIn: configService.get('jwt_refresh_token_expires_in') || '7d',

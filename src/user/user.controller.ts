@@ -29,12 +29,12 @@ export class UserController {
 
   @Get('refresh')
   refresh(@Query('refreshToken') refreshToken: string) {
-    return this.userService.refresh(refreshToken);
+    return this.userService.refresh(refreshToken, false);
   }
 
   @Get('admin/refresh')
   adminRefresh(@Query('refreshToken') refreshToken: string) {
-    return this.userService.refresh(refreshToken);
+    return this.userService.refresh(refreshToken, true);
   }
 
   @Get('init-data')

@@ -114,10 +114,14 @@ export class UserService {
     return vo;
   }
 
-  async refresh(refreshToken: string) {
+  async refresh(refreshToken: string, isAdmin: boolean) {
     try {
       const data = this.jwtService.verify(refreshToken);
-      const user = await findUserById(this.userRepository, data.userId, false);
+      const user = await findUserById(
+        this.userRepository,
+        data.userId,
+        isAdmin,
+      );
       const access_token = signAccessToken(
         this.jwtService,
         this.configService,

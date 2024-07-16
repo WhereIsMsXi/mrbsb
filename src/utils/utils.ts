@@ -5,3 +5,7 @@ export function md5(str) {
   hash.update(str);
   return hash.digest('hex');
 }
+
+export function getCode() {
+  return Math.random().toString().slice(2, 8);
+}

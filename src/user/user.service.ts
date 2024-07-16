@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -15,7 +16,7 @@ import {
   validateRegisterUser,
 } from './em/register.em';
 import { EmailService } from 'src/email/email.service';
-import { md5 } from 'src/utils/utils';
+import { getCode, md5 } from 'src/utils/utils';
 import { Role } from './entity/role.entity';
 import { Permission } from './entity/permission.entity';
 import { LoginDto } from './dto/login.dto';
@@ -28,6 +29,9 @@ import {
 import { findUserById } from './em/refresh.em';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
+import { validateUpdatePasswordCaptcha } from './em/update-password.em';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -139,6 +143,101 @@ export class UserService {
     } catch (e) {
       throw new UnauthorizedException('token 已失效，请重新登录');
     }
+  }
+
+  async updatePassword(userId: number, passwordDto: UpdateUserPasswordDto) {
+    const captcha = await this.redisService.get(
+      `update_password_captcha_${passwordDto.email}`,
+    );
+    validateUpdatePasswordCaptcha(captcha, passwordDto.captcha);
+
+    const foundUser = await this.userRepository.findOneBy({
+      id: userId,
+    });
+    // TODO  判断 foundUser 中的 email 是否和传入的 email 一致
+    if (foundUser.email !== passwordDto.email) {
+      throw new BadRequestException('token 有误');
+    }
+    foundUser.password = md5(passwordDto.password);
+
+    try {
+      await this.userRepository.save(foundUser);
+      return '密码修改成功';
+    } catch (e) {
+      this.logger.error(e, UserService);
+      return '密码修改失败';
+    }
+  }
+
+  async updatePasswordCaptcha(address: string) {
+    const code = getCode();
+
+    await this.redisService.set(
+      `update_password_captcha_${address}`,
+      code,
+      10 * 60,
+    );
+
+    await this.emailService.sendMail({
+      to: address,
+      subject: '更改密码验证码',
+      html: `<p>你的更改密码验证码是 ${code}</p>`,
+    });
+    return '发送成功';
+  }
+
+  async update(userId: number, updateUserDto: UpdateUserDto) {
+    const captcha = await this.redisService.get(
+      `update_user_captcha_${updateUserDto.email}`,
+    );
+    validateCaptcha(captcha, updateUserDto.captcha);
+
+    const foundUser = await this.userRepository.findOneBy({
+      id: userId,
+    });
+    if (updateUserDto.nickName) {
+      foundUser.nickName = updateUserDto.nickName;
+    }
+    if (updateUserDto.headPic) {
+      foundUser.headPic = updateUserDto.headPic;
+    }
+
+    try {
+      await this.userRepository.save(foundUser);
+      return '用户信息修改成功';
+    } catch (e) {
+      this.logger.error(e, UserService);
+      return '用户信息修改成功';
+    }
+  }
+
+  async updateCaptcha(address: string) {
+    const code = getCode();
+
+    await this.redisService.set(
+      `update_user_captcha_${address}`,
+      code,
+      10 * 60,
+    );
+
+    await this.emailService.sendMail({
+      to: address,
+      subject: '更改用户信息验证码',
+      html: `<p>你的验证码是 ${code}</p>`,
+    });
+    return '发送成功';
+  }
+
+  /**
+   * Helper
+   */
+  async findUserDetailById(userId: number) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+    return user;
   }
 
   async initData() {

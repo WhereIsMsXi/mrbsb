@@ -6,6 +6,7 @@ import { RequireLogin, UserInfo } from 'src/custom.decorater';
 import { createUserInfoVO } from './em/helper.em';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { generateParseIntPipe } from 'src/utils/utils';
 
 @Controller('user')
 export class UserController {
@@ -91,6 +92,32 @@ export class UserController {
   @Get('update/captcha')
   async updateUserCaptcha(@Query('address') address: string) {
     return await this.userService.updateCaptcha(address);
+  }
+
+  /**
+   * 冻结用户
+   */
+  @Get('freeze')
+  async freeze(@Query('id') id: number) {
+    return await this.userService.freezeUserById(id);
+  }
+
+  // 获取用户列表
+  @Get('list')
+  async list(
+    @Query('pageNo', generateParseIntPipe('pageNo')) pageNo: number,
+    @Query('pageSize', generateParseIntPipe('pageSize')) pageSize: number,
+    @Query('username') username: string,
+    @Query('nickName') nickName: string,
+    @Query('email') email: string,
+  ) {
+    return await this.userService.findUsers(
+      pageNo,
+      pageSize,
+      username,
+      nickName,
+      email,
+    );
   }
 
   /**

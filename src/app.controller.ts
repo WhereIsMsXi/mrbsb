@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UnauthorizedException } from '@nestjs/common';
 import { AppService } from './app.service';
 import { RequireLogin, RequirePermission, UserInfo } from './custom.decorater';
 
@@ -19,6 +19,7 @@ export class AppController {
     @UserInfo() userInfo,
   ): string {
     console.log(username, userInfo);
+    throw new UnauthorizedException('用户未登录');
     return 'test-guard';
   }
 }

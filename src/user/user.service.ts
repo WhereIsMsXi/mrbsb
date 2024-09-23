@@ -1,5 +1,6 @@
 import {
-  BadRequestException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   Logger,
@@ -33,6 +34,8 @@ import { JwtService } from '@nestjs/jwt';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 import { validateUpdatePasswordCaptcha } from './em/update-password.em';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RefreshTokenVo } from './vo/refresh-token.vo';
+import { UserListVo } from './vo/user-list.vo';
 
 @Injectable()
 export class UserService {
@@ -78,20 +81,23 @@ export class UserService {
       return '注册失败';
     }
   }
-
   async registerCatpcha(address: string) {
-    const code = Math.random().toString().slice(2, 8);
-    await this.redisService.set(`captcha_${address}`, code, 5 * 60);
+    try {
+      const code = getCode();
+      await this.redisService.set(`captcha_${address}`, code, 5 * 60);
 
-    await this.emailService.sendMail({
-      to: address,
-      subject: '注册验证码',
-      html: `<div>
-        <p>您好，欢迎注册，</p>
-        <p>您的注册验证码是 ${code}</p>
-      </div>`,
-    });
-    return '发送成功';
+      await this.emailService.sendMail({
+        to: address,
+        subject: '注册验证码',
+        html: `<div>
+          <p>您好，欢迎注册，</p>
+          <p>您的注册验证码是 ${code}</p>
+        </div>`,
+      });
+      return '发送成功';
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async login(loginDto: LoginDto, isAdmin: boolean) {
@@ -118,7 +124,6 @@ export class UserService {
 
     return vo;
   }
-
   async refresh(refreshToken: string, isAdmin: boolean) {
     try {
       const data = this.jwtService.verify(refreshToken);
@@ -137,27 +142,27 @@ export class UserService {
         this.configService,
         user,
       );
-      return {
-        access_token,
-        refresh_token,
-      };
+
+      const vo = new RefreshTokenVo();
+      vo.access_token = access_token;
+      vo.refresh_token = refresh_token;
+      return vo;
     } catch (e) {
       throw new UnauthorizedException('token 已失效，请重新登录');
     }
   }
 
-  async updatePassword(userId: number, passwordDto: UpdateUserPasswordDto) {
+  async updatePassword(passwordDto: UpdateUserPasswordDto) {
     const captcha = await this.redisService.get(
       `update_password_captcha_${passwordDto.email}`,
     );
     validateUpdatePasswordCaptcha(captcha, passwordDto.captcha);
 
     const foundUser = await this.userRepository.findOneBy({
-      id: userId,
+      username: passwordDto.username,
     });
-    // TODO  判断 foundUser 中的 email 是否和传入的 email 一致
     if (foundUser.email !== passwordDto.email) {
-      throw new BadRequestException('token 有误');
+      throw new HttpException('邮箱不正确', HttpStatus.BAD_REQUEST);
     }
     foundUser.password = md5(passwordDto.password);
 
@@ -169,22 +174,25 @@ export class UserService {
       return '密码修改失败';
     }
   }
-
   async updatePasswordCaptcha(address: string) {
-    const code = getCode();
+    try {
+      const code = getCode();
 
-    await this.redisService.set(
-      `update_password_captcha_${address}`,
-      code,
-      10 * 60,
-    );
+      await this.redisService.set(
+        `update_password_captcha_${address}`,
+        code,
+        10 * 60,
+      );
 
-    await this.emailService.sendMail({
-      to: address,
-      subject: '更改密码验证码',
-      html: `<p>你的更改密码验证码是 ${code}</p>`,
-    });
-    return '发送成功';
+      await this.emailService.sendMail({
+        to: address,
+        subject: '更改密码验证码',
+        html: `<p>你的更改密码验证码是 ${code}</p>`,
+      });
+      return '发送成功';
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async update(userId: number, updateUserDto: UpdateUserDto) {
@@ -278,10 +286,10 @@ export class UserService {
       where: condition,
     });
 
-    return {
-      users,
-      totalCount,
-    };
+    const vo = new UserListVo();
+    vo.users = users;
+    vo.totalCount = totalCount;
+    return vo;
   }
 
   /**

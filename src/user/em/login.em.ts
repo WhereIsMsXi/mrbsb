@@ -50,6 +50,7 @@ export function signAccessToken(
     {
       userId: userInfo.id,
       username: userInfo.username,
+      email: userInfo.email,
       roles: userInfo.roles,
       permissions: userInfo.permissions,
     },

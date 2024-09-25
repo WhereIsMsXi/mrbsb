@@ -146,8 +146,6 @@ export class UserController {
    * 更新密码
    */
   @Post(['update_password', 'admin/update_password'])
-  @RequireLogin()
-  @ApiBearerAuth()
   @ApiBody({
     type: UpdateUserPasswordDto,
   })
@@ -163,8 +161,6 @@ export class UserController {
    * 发送更改密码的验证码
    */
   @Get('update_password/captcha')
-  @RequireLogin()
-  @ApiBearerAuth()
   @ApiQuery({
     name: 'address',
     type: String,

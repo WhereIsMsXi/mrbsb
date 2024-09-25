@@ -71,7 +71,7 @@ export class UserService {
     });
     validateRegisterUser(foundUser);
 
-    const newUser = await createUser(foundUser);
+    const newUser = await createUser(user);
 
     try {
       await this.userRepository.save(newUser);
@@ -153,6 +153,7 @@ export class UserService {
   }
 
   async updatePassword(passwordDto: UpdateUserPasswordDto) {
+    debugger;
     const captcha = await this.redisService.get(
       `update_password_captcha_${passwordDto.email}`,
     );

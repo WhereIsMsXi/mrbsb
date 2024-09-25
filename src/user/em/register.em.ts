@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { User } from '../entity/user.entity';
 import { md5 } from 'src/utils/utils';
+import { RegisterUserDto } from '../dto/register.dto';
 
 export function validateCaptcha(captcha: string, redisCaptcha: string) {
   if (!captcha) {
@@ -18,7 +19,7 @@ export function validateRegisterUser(user: User) {
   }
 }
 
-export function createUser(user: User) {
+export function createUser(user: RegisterUserDto) {
   const result = new User();
   result.username = user.username;
   result.password = md5(user.password);

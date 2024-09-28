@@ -41,7 +41,7 @@ import { MeetingRoom } from './meeting-room/entity/meeting-room.entity';
     }),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.development',
+      envFilePath: 'src/.env',
     }),
     JwtModule.registerAsync({
       global: true,

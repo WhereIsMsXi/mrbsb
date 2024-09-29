@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import * as path from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -41,7 +42,7 @@ import { MeetingRoom } from './meeting-room/entity/meeting-room.entity';
     }),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'src/.env',
+      envFilePath: path.join(__dirname, '.env'),
     }),
     JwtModule.registerAsync({
       global: true,

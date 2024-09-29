@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  nest-app:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    depends_on:
+      - mysql-container
+      - redis-container
+    ports:
+      - 3005:3005
+    networks:
+      - common-network
+  mysql-container:
+    image: mysql
+    volumes:
+      - /Users/xts/share/docker-compose/meeting_room_booking_system_backend/mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: meeting_room_booking_system
+      MYSQL_ROOT_PASSWORD: 123456
+    networks:
+      - common-network
+  redis-container:
+    image: redis
+    volumes:
+      - /Users/xts/share/docker-compose/meeting_room_booking_system_backend/redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - common-network
+networks:
+  common-network:
+    driver: bridge
